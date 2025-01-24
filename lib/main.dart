@@ -1,28 +1,38 @@
-import 'package:chat_app/configs/routes/routes_manager.dart';
-import 'package:chat_app/configs/routes/routes_name.dart';
 import 'package:chat_app/feature/auth/view_model/login_view_model.dart';
+import 'package:chat_app/configs/routes/routes_name.dart';
+import 'package:chat_app/configs/routes/routes_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  runApp(const MyApp());
+  final bool isLoggedIn = await LoginViewModel().isLoggedIn();
+
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({
+    super.key,
+    required this.isLoggedIn,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => LoginViewModel()),
+        ChangeNotifierProvider(create: (_) => LoginViewModel()),
       ],
       child: MaterialApp(
+        title: 'Chat App',
         debugShowCheckedModeBanner: false,
-        title: 'Flutter Chat App',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        initialRoute: RoutesName.login,
+        theme: ThemeData(
+          primarySwatch: Colors.teal,
+        ),
+        initialRoute: isLoggedIn ? RoutesName.chat : RoutesName.login,
         onGenerateRoute: RoutesManager.generateRoute,
       ),
     );
