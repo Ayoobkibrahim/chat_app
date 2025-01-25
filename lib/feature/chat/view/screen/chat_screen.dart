@@ -21,7 +21,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? recordedFilePath;
   String? attachedFilePath;
   String? attachedFileName;
-  String? currentPlayingPath; // Tracks the current audio being played
+  String? currentPlayingPath; 
   Duration recordingDuration = Duration.zero;
   Duration audioProgress = Duration.zero;
 
@@ -87,14 +87,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _playAudio(String filePath) async {
     if (!isPlaying || currentPlayingPath != filePath) {
-      // Stop current audio if a different file is being played
       if (isPlaying && currentPlayingPath != filePath) {
         await _stopAudio();
       }
 
       setState(() {
         isPlaying = true;
-        currentPlayingPath = filePath; // Update currently playing file
+        currentPlayingPath = filePath; 
         audioProgress = Duration.zero;
       });
 
@@ -104,7 +103,7 @@ class _ChatScreenState extends State<ChatScreen> {
         whenFinished: () {
           setState(() {
             isPlaying = false;
-            currentPlayingPath = null; // Reset when playback finishes
+            currentPlayingPath = null; 
             audioProgress = Duration.zero;
           });
         },
@@ -123,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await _player.stopPlayer();
       setState(() {
         isPlaying = false;
-        currentPlayingPath = null; // Reset when audio is stopped
+        currentPlayingPath = null; 
         audioProgress = Duration.zero;
       });
     }
