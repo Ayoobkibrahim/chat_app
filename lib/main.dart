@@ -1,6 +1,7 @@
 import 'package:chat_app/feature/auth/view_model/login_view_model.dart';
 import 'package:chat_app/configs/routes/routes_name.dart';
 import 'package:chat_app/configs/routes/routes_manager.dart';
+import 'package:chat_app/feature/chat/view_model/chat_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LoginViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],
       child: MaterialApp(
         title: 'Chat App',

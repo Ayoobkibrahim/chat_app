@@ -9,7 +9,7 @@ class RoutesManager {
       case RoutesName.login:
         return MaterialPageRoute(builder: (_) => LoginScreen());
       case RoutesName.chat:
-        return MaterialPageRoute(builder: (_) => const ChatScreen());
+        return MaterialPageRoute(builder: (_) =>  ChatScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
