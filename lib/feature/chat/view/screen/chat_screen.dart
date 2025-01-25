@@ -21,7 +21,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? recordedFilePath;
   String? attachedFilePath;
   String? attachedFileName;
-  String? currentPlayingPath; 
+  String? currentPlayingPath;
   Duration recordingDuration = Duration.zero;
   Duration audioProgress = Duration.zero;
 
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() {
         isPlaying = true;
-        currentPlayingPath = filePath; 
+        currentPlayingPath = filePath;
         audioProgress = Duration.zero;
       });
 
@@ -103,7 +103,7 @@ class _ChatScreenState extends State<ChatScreen> {
         whenFinished: () {
           setState(() {
             isPlaying = false;
-            currentPlayingPath = null; 
+            currentPlayingPath = null;
             audioProgress = Duration.zero;
           });
         },
@@ -122,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await _player.stopPlayer();
       setState(() {
         isPlaying = false;
-        currentPlayingPath = null; 
+        currentPlayingPath = null;
         audioProgress = Duration.zero;
       });
     }
@@ -224,7 +224,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 15,)
+          const SizedBox(
+            height: 15,
+          )
         ],
       ),
     );
@@ -405,30 +407,30 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconButton(
-              icon: Icon(
-                isPlaying && currentPlayingPath == message["filePath"]
-                    ? Icons.pause
-                    : Icons.play_arrow,
-                color: Colors.blue,
-              ),
-              onPressed: () {
-                if (isPlaying && currentPlayingPath == message["filePath"]) {
-                  _stopAudio();
-                } else {
-                  _playAudio(message["filePath"]);
-                }
-              },
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LinearProgressIndicator(
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    isPlaying && currentPlayingPath == message["filePath"]
+                        ? Icons.pause
+                        : Icons.play_arrow,
+                    color: Colors.blue,
+                  ),
+                  onPressed: () {
+                    if (isPlaying &&
+                        currentPlayingPath == message["filePath"]) {
+                      _stopAudio();
+                    } else {
+                      _playAudio(message["filePath"]);
+                    }
+                  },
+                ),
+                Expanded(
+                  child: LinearProgressIndicator(
                     value:
                         (isPlaying && currentPlayingPath == message["filePath"])
                             ? audioProgress.inSeconds / message["duration"]
@@ -436,27 +438,105 @@ class _ChatScreenState extends State<ChatScreen> {
                     backgroundColor: Colors.grey.shade300,
                     valueColor: const AlwaysStoppedAnimation(Colors.black),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(audioProgress),
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 12),
-                      ),
-                      Text(
-                        _formatDuration(Duration(seconds: message["duration"])),
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 12),
-                      ),
-                    ],
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _formatDuration(Duration(seconds: message["duration"])),
+                  style: const TextStyle(color: Colors.black, fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (message["messageType"] == "order") ...[
+              ExpansionTile(
+                title: const Text(
+                  "Transcript",
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      message["transcript"] ?? "No transcript available.",
+                      style: const TextStyle(color: Colors.black87),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 5),
-            _getStatusIcon(message["status"]),
+              const Divider(),
+              ExpansionTile(
+                title: const Text(
+                  "Order List",
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      message["orderList"] ?? "No Order List available.",
+                      style: const TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.insert_drive_file, color: Colors.black),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Order No: ${message["orderNo"] ?? "N/A"}",
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                        color: Colors.greenAccent.withOpacity(0.3)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        "Approved by DP on ${message["approvalTime"] ?? "N/A"}",
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    "V.1",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    message["timestamp"] ?? "",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -567,7 +647,6 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             },
           ),
-          
         ],
       ),
     );
@@ -605,6 +684,8 @@ class _ChatScreenState extends State<ChatScreen> {
           "status": "Pending",
           "duration": recordingDuration.inSeconds,
           "messageType": type,
+          "orderNo": type == "order" ? "15544" : null,
+          "orderStatus": type == "order" ? "Approved" : null,
         });
         recordedFilePath = null;
         recordingDuration = Duration.zero;
