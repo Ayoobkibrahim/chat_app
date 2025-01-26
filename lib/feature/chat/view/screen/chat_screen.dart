@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class ChatScreen extends StatelessWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +121,16 @@ class ChatScreen extends StatelessWidget {
               if (message["type"] == "voice") {
                 return _buildVoiceMessage(context, message, viewModel);
               } else if (message["type"] == "file") {
-                return _buildFileMessage(context, message);
+                final filePath = message["filePath"];
+                final fileName = message["fileName"];
+                return _buildSelectedFilePreview(
+                  context,
+                  filePath,
+                  fileName,
+                  () {
+                    viewModel.removeFileMessage(message);
+                  },
+                );
               } else {
                 return _buildTextMessage(context, message);
               }
@@ -132,60 +141,45 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFileMessage(BuildContext context, Map<String, dynamic> message) {
-    return GestureDetector(
-      onLongPress: () {
-        // Show action menu or context-specific actions
-      },
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade300,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.insert_drive_file, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      message["fileName"] ?? "Attached File",
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+  Widget _buildSelectedFilePreview(
+    BuildContext context,
+    String? filePath,
+    String? fileName,
+    VoidCallback onRemove,
+  ) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade300,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.insert_drive_file, color: Colors.white),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              fileName ?? "Unknown File",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    message["timestamp"] ?? "",
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  _getStatusIcon(message["status"]),
-                ],
-              ),
-            ],
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: onRemove,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildTextMessage(BuildContext context, Map<String, dynamic> message) {
     return GestureDetector(
-      onLongPress: () {
-        // Show action menu or context-specific actions
-      },
+      onLongPress: () {},
       child: Align(
         alignment: Alignment.centerLeft,
         child: Container(
@@ -238,9 +232,19 @@ class ChatScreen extends StatelessWidget {
           final recordedFilePath = viewModel.recordedFilePath;
           final messageController = viewModel.messageController;
           final shouldShowSendButtons = viewModel.shouldShowSendButtons();
+          final attachedFilePath = viewModel.attachedFilePath;
+          final attachedFileName = viewModel.attachedFileName;
 
           return Column(
             children: [
+              if (attachedFilePath != null && attachedFileName != null)
+                _buildSelectedFilePreview(
+                  context,
+                  attachedFilePath,
+                  attachedFileName,
+                  viewModel.clearAttachedFile,
+                ),
+              const SizedBox(height: 10),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -402,73 +406,88 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const Divider(),
-              const SizedBox(height: 10),
-              if (message["transcript"] != null)
-                ExpandableSection(
-                  title: "Transcript",
-                  content: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      message["transcript"]!,
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black87),
+              if (message["messageType"] == "order") ...[
+                const Divider(),
+                const SizedBox(height: 10),
+                if (message["transcript"] != null)
+                  ExpandableSection(
+                    title: "Transcript",
+                    content: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        message["transcript"]!,
+                        style: const TextStyle(
+                            fontSize: 14, color: Colors.black87),
+                      ),
                     ),
                   ),
-                ),
-              const Divider(),
-              const SizedBox(height: 10),
-              if (message["orderList"] != null)
-                ExpandableSection(
-                  title: "Order List",
-                  content: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: (message["orderList"] as List<dynamic>)
-                        .map((order) => _buildOrderListItem(order))
-                        .toList(),
+                const Divider(),
+                const SizedBox(height: 10),
+                if (message["messageType"] == "order" &&
+                    message["orderList"] != null)
+                  ExpandableSection(
+                    title: "Order List",
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: (message["orderList"] as List<dynamic>)
+                          .map((order) => _buildOrderListItem(order))
+                          .toList(),
+                    ),
+                  ),
+                const Divider(),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.insert_drive_file_rounded),
+                      Text(
+                        "Order Number: ${message["orderNo"] ?? "N/A"}",
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    ],
                   ),
                 ),
-              const Divider(),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Row(
-                  children: [
-                    const Icon(Icons.insert_drive_file_rounded),
-                    Text(
-                      "Order Number: ${message["orderNo"] ?? "N/A"}",
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  ],
+                if (message["messageType"] == "order")
+                  const SizedBox(height: 5),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Approved by DP on ${message["approvalTime"] ?? "N/A"}",
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "v.1",
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 5),
-              const Divider(),
+                const SizedBox(height: 5),
+                const Divider(),
+                const SizedBox(height: 5),
+              ],
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Approved by DP on ${message["approvalTime"] ?? "N/A"}",
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "v.1",
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                     Text(
                       message["timestamp"] ?? "",
                       style:
@@ -520,7 +539,7 @@ class ChatScreen extends StatelessWidget {
           Expanded(
             flex: 1,
             child: Text(
-              order["quantity"]?.toString() ?? "0", // Convert to String
+              order["quantity"]?.toString() ?? "0",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,
@@ -541,7 +560,7 @@ class ChatScreen extends StatelessWidget {
                 const Icon(Icons.timer, size: 14, color: Colors.blue),
                 const SizedBox(width: 5),
                 Text(
-                  order["time"]?.toString() ?? "0", // Convert to String
+                  order["time"]?.toString() ?? "0",
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
@@ -693,7 +712,8 @@ class ChatScreen extends StatelessWidget {
                   },
                   child: const Row(
                     children: [
-                      Icon(Icons.insert_drive_file_rounded, color: Colors.black),
+                      Icon(Icons.insert_drive_file_rounded,
+                          color: Colors.black),
                       SizedBox(width: 15),
                       Text(
                         'Quick Order',

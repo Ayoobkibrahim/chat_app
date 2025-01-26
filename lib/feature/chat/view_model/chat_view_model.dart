@@ -139,11 +139,22 @@ class ChatViewModel extends ChangeNotifier {
 
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
-    if (result != null) {
-      attachedFilePath = result.files.single.path;
+    if (result != null && result.files.single.path != null) {
+      attachedFilePath = result.files.single.path!;
       attachedFileName = result.files.single.name;
       notifyListeners();
     }
+  }
+
+  void removeFileMessage(Map<String, dynamic> message) {
+    messages.remove(message);
+    notifyListeners();
+  }
+
+  void clearAttachedFile() {
+    attachedFilePath = null;
+    attachedFileName = null;
+    notifyListeners();
   }
 
   List<Map<String, dynamic>> getFilteredMessages() {
@@ -185,30 +196,33 @@ class ChatViewModel extends ChangeNotifier {
     if (recordedFilePath != null) {
       messages.add({
         "type": "voice",
-        "filePath": recordedFilePath,
+        "filePath": recordedFilePath!,
         "timestamp": _currentTimestamp(),
         "isSent": true,
         "status": "Pending",
         "duration": recordingDuration.inSeconds,
-        "transcript": "This is a sample transcription of the voice message.",
-        "orderList": [
-          {"item": "Milk", "quantity": "5 Packets", "time": 33},
-          {"item": "Butter", "quantity": "5 kg", "time": 93},
-          {"item": "Cheese", "quantity": "3 Crates", "time": 155},
-        ],
-        "orderNo": "15544",
-        "approvalTime": "02:30pm, 15/07/2024",
         "messageType": type,
+        if (type == "order") ...{
+          "transcript":
+              "Wanted To place an order forr a few minutes.Here's what i need First, 50 units of the classic leather wallet in balck,",
+          "orderList": [
+            {"item": "Milk", "quantity": "5 Packets"},
+            {"item": "Butter", "quantity": "5 kg"},
+            {"item": "Cheese", "quantity": "3 Crates"},
+          ],
+          "orderNo": "15544",
+          "approvalTime": "02:30 PM, 15/07/2024",
+        }
       });
       recordedFilePath = null;
       recordingDuration = Duration.zero;
       messageAdded = true;
     }
 
-    if (attachedFilePath != null) {
+    if (attachedFilePath != null && attachedFileName != null) {
       messages.add({
         "type": "file",
-        "fileName": attachedFileName,
+        "fileName": attachedFileName ?? "Unknown File",
         "timestamp": _currentTimestamp(),
         "isSent": true,
         "status": "Pending",
@@ -254,7 +268,7 @@ Approval Time: ${message["approvalTime"] ?? "N/A"}
     Share.share(orderDetails);
   }
 
-    bool shouldShowSendButtons() {
+  bool shouldShowSendButtons() {
     return messageController.text.trim().isNotEmpty ||
         recordedFilePath != null ||
         attachedFilePath != null;
