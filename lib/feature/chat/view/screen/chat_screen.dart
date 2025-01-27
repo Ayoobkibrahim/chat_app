@@ -38,7 +38,10 @@ class ChatScreen extends StatelessWidget {
         children: [
           _buildFilterChips(),
           _buildMessageList(),
-          _buildInputSection(),
+          _buildInputSection(
+            {},
+            Provider.of<ChatViewModel>(context, listen: false),
+          ),
           const SizedBox(height: 15),
         ],
       ),
@@ -130,9 +133,15 @@ class ChatScreen extends StatelessWidget {
                   () {
                     viewModel.removeFileMessage(message);
                   },
+                  message,
+                  viewModel,
                 );
               } else {
-                return _buildTextMessage(context, message);
+                return _buildTextMessage(
+                  context,
+                  message,
+                  viewModel,
+                );
               }
             },
           ),
@@ -146,40 +155,53 @@ class ChatScreen extends StatelessWidget {
     String? filePath,
     String? fileName,
     VoidCallback onRemove,
+    Map<String, dynamic> message,
+    ChatViewModel viewModel,
   ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade300,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.insert_drive_file, color: Colors.white),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              fileName ?? "Unknown File",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () {
+        _showActionMenu(context, message, viewModel);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade300,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.insert_drive_file, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                fileName ?? "Unknown File",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: onRemove,
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: onRemove,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTextMessage(BuildContext context, Map<String, dynamic> message) {
+  Widget _buildTextMessage(
+    BuildContext context,
+    Map<String, dynamic> message,
+    ChatViewModel viewModel,
+  ) {
     return GestureDetector(
-      onLongPress: () {},
+      onLongPress: () {
+        _showActionMenu(context, message, viewModel);
+      },
       child: Align(
         alignment: Alignment.centerLeft,
         child: Container(
@@ -223,7 +245,10 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInputSection() {
+  Widget _buildInputSection(
+    Map<String, dynamic> message,
+    ChatViewModel viewModel,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(10.0),
       child: Consumer<ChatViewModel>(
@@ -243,6 +268,8 @@ class ChatScreen extends StatelessWidget {
                   attachedFilePath,
                   attachedFileName,
                   viewModel.clearAttachedFile,
+                  message,
+                  viewModel,
                 ),
               const SizedBox(height: 10),
               Container(
@@ -290,18 +317,24 @@ class ChatScreen extends StatelessWidget {
                             viewModel.pickFile();
                           },
                         ),
-                        IconButton(
-                          icon: Icon(
-                            isRecording ? Icons.stop : Icons.mic,
+                        Container(
+                          decoration: BoxDecoration(
                             color: Colors.blue,
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          onPressed: () {
-                            if (isRecording) {
-                              viewModel.stopRecording();
-                            } else {
-                              viewModel.startRecording();
-                            }
-                          },
+                          child: IconButton(
+                            icon: Icon(
+                              isRecording ? Icons.stop : Icons.mic_none,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              if (isRecording) {
+                                viewModel.stopRecording();
+                              } else {
+                                viewModel.startRecording();
+                              }
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -691,8 +724,11 @@ class ChatScreen extends StatelessWidget {
     return heights[index % heights.length];
   }
 
-  void _showActionMenu(BuildContext context, Map<String, dynamic> message,
-      ChatViewModel viewModel) {
+  void _showActionMenu(
+    BuildContext context,
+    Map<String, dynamic> message,
+    ChatViewModel viewModel,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
