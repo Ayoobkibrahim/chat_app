@@ -13,10 +13,4 @@ class LoginViewModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('isLoggedIn') ?? false;
   }
-
-  Future<void> logoutUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    notifyListeners();
-  }
 }
