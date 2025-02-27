@@ -83,6 +83,7 @@ class LoginScreen extends StatelessWidget {
                         await context
                             .read<LoginViewModel>()
                             .loginUser(username);
+                        // ignore: use_build_context_synchronously
                         Navigator.pushReplacementNamed(
                             context, RoutesName.chat);
                       },
